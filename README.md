@@ -1,12 +1,12 @@
 # Auto-Mux
 
 
-# What’s it for?
+## What’s it for?
 
 Batch muxing (remapping video/audio streams without rerendering) via the Win Explorer context menu.
 
 
-# Why?
+## Why?
 
 The muxing utilities I tried prior had lots of other useful features that I didn’t use and got in the way, clunky GUIs and limited/complicated batching capabilities. 
 
@@ -15,7 +15,7 @@ I work for a company that provides an online school open day platform. Redoing r
 By simply cutting the audio track against the existing NLE project and exporting the audio only, we can select those files in explorer, right click > send to > Auto-Mux, and batch mux by matching the “pointNumber” between video and audio streams. This saves the pain of rerendering everything.
 
 
-## Yeah well that sounds okay, but how would that help me?
+### Yeah well that sounds okay, but how would that help me?
 
 If batch muxing from the explorer context menu would be useful to you but you want to tweak the settings a bit, simply edit the variables at the top of the “Auto-Mux.py” file. They should be pretty self explanatory.
 
