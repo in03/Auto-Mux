@@ -22,8 +22,6 @@ If batch muxing from the explorer context menu would be useful to you but you wa
 
 ## Requirements
 
-
-
 *   Windows only, tested on Windows 10
 *   Tested on Python 3.6 + 3.7.4
 *   Requires FFMPEG to be installed and accessible in PATH
@@ -31,16 +29,12 @@ If batch muxing from the explorer context menu would be useful to you but you wa
 
 
 ## Setup
-
-
-
 1. Install FFMPEG and add it to PATH environment variable
 2. Download Auto-Mux, put it wherever you like
 3. Run Setup.bat to create a shortcut in Send To
 
 
 ## User variables
-
 
 #### _regex_criteria = "^(p\d+)"_
 Common denominator between matching video/audio streams. In this case the literal letter ‘p’ followed by one digit or more.
@@ -76,15 +70,11 @@ Leave as "" to log into the same directory as muxed files.
 
 #### video_tidy = "OLD"
 A subfolder to put processed video files into.
-
 Can be set to same as _audio_tidy._
-
 Ignored if _post_cleanup _is false
 
 
 #### audio_tidy = "Audio"
 A subfolder to put processed audio files into.
-
 Can be set to same as _video_tidy._
-
 Ignored if _post_cleanup _is false
