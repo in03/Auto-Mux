@@ -1,5 +1,4 @@
 @echo off
 cls
-cd %~dp0
-python Auto-Mux.py %*
+python %~dp0\Auto-Mux.py %*
 PAUSE

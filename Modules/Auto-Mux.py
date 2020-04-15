@@ -1,12 +1,20 @@
 
-import os
+import os, sys, time
 import pathlib
 import shutil
-import sys
 import re
 import argparse
 import subprocess
-from colorama import Fore
+
+# Coloured stdout
+try:
+    from colorama import Fore
+except ImportError:
+    Fore.RED = ""
+    Fore.YELLOW = ""
+    Fore.GREEN = ""
+    print("Install Colorama module for coloured console output")
+    time.sleep(3)
 
 ################ USER VARIABLES #################
 
@@ -32,9 +40,9 @@ post_cleanup = True
 # Write a log of processed files?
 write_log = True
 
-# Set this to a non existent path like "None" to log into the output file directory
+# Leave as "" to log into the output file directory
 # This means an incorrect path will fail silently
-custom_log_path = None
+custom_log_path = ""
 
 # Folders to tidy up into
 # Set to same if desired
@@ -66,13 +74,18 @@ def sort_media_types(file_list):
 
 def match_and_mux(videoList, audioList):
 
-    muxList = []
     audioCount = {}
     outputList = []
+    failed_regex = []
 
     for video in videoList:
         print(Fore.GREEN + video)
         match = re.match(regex_criteria, os.path.basename(video))[0]
+        if not match:
+            failed_regex.append(video)
+            print(Fore.YELLOW + f"{video} failed regex match. Skipping.")
+            continue
+
         print(Fore.GREEN + f"VIDEO CRITERIA MATCH: {match}")
         for audio in audioList:
             print(Fore.GREEN + f" AUDIO: {audio}")
@@ -82,7 +95,6 @@ def match_and_mux(videoList, audioList):
                 outputPath = f"{os.path.splitext(video)[0]}{muxed_suffix}{os.path.splitext(video)[1]}"
                 outputList.append(outputPath)
                 print(f"Processing: \"{outputPath}\"")
-                muxList.append(outputPath)
                 if audio not in audioCount:
                     audioCount[audio] = 1
                 elif audioCount == match_limit:
@@ -94,7 +106,7 @@ def match_and_mux(videoList, audioList):
                     audioCount[audio] +=1
                         # Mux with ffmpeg.
                 subprocess.run(["ffmpeg", "-hide_banner", "-i", video, "-i", audio, "-ac", "2", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-map", "0:v:0", "-map", "1:a:0", outputPath], stdout=subprocess.PIPE)              
-    return [muxList, audioCount, outputList]
+    return [audioCount, outputList]
 
 ###############################################
   
@@ -106,11 +118,13 @@ def cleanup_used_files(list, subfolder_name):
             try:
                 os.mkdir(subfolder)
             except IOError:
-                return None
+                print(Fore.YELLOW + f"Couldn't make \"{subfolder_name}\" subfolder, skipping...")
+                return False
         try:
             shutil.move(file, (subfolder + "\\" + os.path.basename(file)))
         except IOError:
             print(Fore.YELLOW + f"Couldn't move \"{file}\", skipping...")
+            return False
 
 ###############################################
 
@@ -129,16 +143,30 @@ if __name__ == "__main__":
     # Sort media types
     videoList, audioList, unsupportedList = sort_media_types(file_list)
 
+    # Check muxable streams
+    if len(videoList) == 0 and len(audioList) == 0:
+        print("No valid video or audio streams passed for muxing. Check your selection.")
+        sys.exit(1)
+
+    if len(videoList) == 0:
+        print("No valid video streams passed for muxing. Check your selection.")
+        sys.exit(1)
+
+    if len(audioList) == 0:
+        print("No valid audio streams passed for muxing. Check your selection.")
+        sys.exit(1)
+
+
     # Match media and mux
-    muxList, audioCount, outputList = match_and_mux(videoList, audioList)
+    audioCount, outputList = match_and_mux(videoList, audioList)
 
     # Cleanup       
     
     if post_cleanup:
-        if cleanup_used_files(audioList, audio_tidy) == None:
+        if cleanup_used_files(audioList, audio_tidy):
             print(Fore.RED + "Couldn't tidy up used audio files")
 
-        if cleanup_used_files(videoList, video_tidy) == None:
+        if cleanup_used_files(videoList, video_tidy):
             print(Fore.RED + "Couldn't tidy up used video files.")
 
         # Rename muxed files
@@ -159,8 +187,8 @@ if __name__ == "__main__":
     # Status Report
     unmatched_audio = [x for x in audioList if x not in audioCount]
     if post_cleanup:
-        muxList = renamed_muxed
-    unmatched_video = [x for x in videoList if x not in muxList]
+        outputList = renamed_muxed
+    unmatched_video = [x for x in videoList if x not in outputList]
 
     if len(unsupportedList) != 0:
         print(f"failed {len(unsupportedList)} files for wrong filetype. Check changelog.")
@@ -174,15 +202,22 @@ if __name__ == "__main__":
 
 
     # Write Changelog
+
+    parent_dir = os.path.dirname(outputList[0])
     if write_log:
-        if os.path.exists(custom_log_path):
-            log_path = custom_log_path
-        else:
-            log_path = os.path.dirname(outputList[0])
+        try:
+            if os.path.exists(custom_log_path):
+                log_path = custom_log_path
+            else:
+                log_path = parent_dir
+        except:
+            log_path = parent_dir
+                
+
         changelog = open(log_path + "\\Auto Mux Changelog.log", "w+")
 
         changelog.write("Succesfully muxed:\n")
-        for muxed in muxList:
+        for muxed in outputList:
             changelog.write(muxed + "\n")
 
         changelog.write("Skipped incompatible files:\n")
