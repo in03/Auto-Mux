@@ -23,6 +23,9 @@ except ImportError:
 # E.g, 'p1' in 'ProjectName_SequenceName_p1l_RenderType.mp4'
 regex_criteria = "(p\d+)"
 
+# Don't run the regex check if doing one mux at a time
+match_if_single_file = False
+
 # List video/audio types you want to identify for muxing here
 match_as_video_type = [".mp4", ".mov"]
 match_as_audio_type = [".wav", ".aac"]
@@ -71,6 +74,19 @@ def sort_media_types(file_list):
     return [videoList, audioList, unsupportedList]
 
 ###############################################
+def mux_single_file(videoList, audioList):
+
+    video = videoList[0]
+    audio = audioList[0]
+
+    outputPath = f"{os.path.splitext(video)[0]}{muxed_suffix}{os.path.splitext(video)[1]}"
+    try:
+        subprocess.run(["ffmpeg", "-hide_banner", "-i", video, "-i", audio, "-ac", "2", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-map", "0:v:0", "-map", "1:a:0", outputPath], stdout=subprocess.PIPE)
+    except:
+        print("Failed to mux file...")
+        sys.exit(1)
+    print("Succesfully muxed file")
+    sys.exit(0)
 
 def match_and_mux(videoList, audioList):
 
@@ -156,6 +172,15 @@ if __name__ == "__main__":
     if len(audioList) == 0:
         print("No valid audio streams passed for muxing. Check your selection.")
         sys.exit(1)
+    
+    if (len(audioList == 1) and len(videoList == 1)):
+        response = input("You've passed only two files. Assume they match and ignore file-name checks? Type 'yes' or 'no'.")
+        if ('y' in response.lower()):
+            mux_single_file(videoList, audioList)
+        else:
+            print("Aborting...")
+            sys.exit(0)
+        
 
 
     # Match media and mux
