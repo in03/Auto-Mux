@@ -21,7 +21,7 @@ except ImportError:
 # What to look for to match tracks
 # In this case match a point number, "p" followed by one or more numbers
 # E.g, 'p1' in 'ProjectName_SequenceName_p1l_RenderType.mp4'
-regex_criteria = "^(p\d+)"
+regex_criteria = "(p\d+)"
 
 # List video/audio types you want to identify for muxing here
 match_as_video_type = [".mp4", ".mov"]
@@ -80,7 +80,7 @@ def match_and_mux(videoList, audioList):
 
     for video in videoList:
         print(Fore.GREEN + video)
-        match = re.match(regex_criteria, os.path.basename(video))[0]
+        match = re.search(regex_criteria, os.path.basename(video)).group()
         if not match:
             failed_regex.append(video)
             print(Fore.YELLOW + f"{video} failed regex match. Skipping.")
@@ -89,7 +89,8 @@ def match_and_mux(videoList, audioList):
         print(Fore.GREEN + f"VIDEO CRITERIA MATCH: {match}")
         for audio in audioList:
             print(Fore.GREEN + f" AUDIO: {audio}")
-            if str(match) in str(os.path.basename(audio)):
+            print(match)
+            if match in os.path.basename(audio):
                 print(Fore.GREEN + os.path.basename(audio))
                 
                 outputPath = f"{os.path.splitext(video)[0]}{muxed_suffix}{os.path.splitext(video)[1]}"
@@ -105,7 +106,7 @@ def match_and_mux(videoList, audioList):
                 else:
                     audioCount[audio] +=1
                         # Mux with ffmpeg.
-                subprocess.run(["ffmpeg", "-hide_banner", "-i", video, "-i", audio, "-ac", "2", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-map", "0:v:0", "-map", "1:a:0", outputPath], stdout=subprocess.PIPE)              
+                subprocess.run(["ffmpeg", "-hide_banner", "-i", video, "-i", audio, "-ac", "2", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-map", "0:v:0", "-map", "1:a:0", outputPath], stdout=subprocess.PIPE)           
     return [audioCount, outputList]
 
 ###############################################
