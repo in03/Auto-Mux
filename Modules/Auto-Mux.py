@@ -161,7 +161,7 @@ if __name__ == "__main__":
     videoList, audioList, unsupportedList = sort_media_types(file_list)
 
     # Check muxable streams
-    if len(videoList) == 0 and len(audioList) == 0:
+    if (len(videoList) == 0) and (len(audioList) == 0):
         print("No valid video or audio streams passed for muxing. Check your selection.")
         sys.exit(1)
 
@@ -173,7 +173,7 @@ if __name__ == "__main__":
         print("No valid audio streams passed for muxing. Check your selection.")
         sys.exit(1)
     
-    if (len(audioList == 1) and len(videoList == 1)):
+    if (len(audioList) == 1) and (len(videoList) == 1):
         response = input("You've passed only two files. Assume they match and ignore file-name checks? Type 'yes' or 'no'.")
         if ('y' in response.lower()):
             mux_single_file(videoList, audioList)
